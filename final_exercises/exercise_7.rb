@@ -1,0 +1,1 @@
+# A hash is a list of keys linked to values, arrays are primarily just indexed lists.
