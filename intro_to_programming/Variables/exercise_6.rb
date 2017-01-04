@@ -1,0 +1,1 @@
+# the error message tells us that the variable "shoes" is undefined, or was initialized outside of the scope of 'main'.
