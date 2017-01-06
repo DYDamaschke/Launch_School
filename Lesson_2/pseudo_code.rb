@@ -52,3 +52,42 @@ Given an array of strings.
     PRINT saved_string
 
   END
+
+  ==================================
+
+  Array of integers:
+
+  Pseudo:
+
+  Given an array of integers
+    
+    -Create empty array, new_array
+    -iterate over the array
+      -if the iterator is even
+        -add to new_array
+      -otherwise
+        -move to the next integer
+
+    -return new array
+
+  ===================================
+
+  Formal:
+
+  Given an array of integers called numbers
+
+  START
+
+  SET new_array = []
+  SET iterator = 0
+
+  WHILE iterator < length of numbers
+    IF iterator is even
+      new_array << integer at space iterator
+    ELSE
+      move to next integer
+    iterator = iterator + 1
+
+  PRINT new_array
+
+  END
