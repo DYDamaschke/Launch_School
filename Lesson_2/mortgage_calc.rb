@@ -1,9 +1,10 @@
+require 'pry'
 require 'yaml'
 MESSAGES = YAML.load_file('mortgage_messages.yml')
 
 def monthly_int(interest)
   ann_interest = interest / 100
-  interest = ann_interest / 12
+  ann_interest / 12
 end
 
 def month_term(ann_term)
@@ -18,11 +19,15 @@ def number?(num)
   num.to_f.to_s == num || num.to_i.to_s == num
 end
 
-def month_pay(amount, interest, duration)
+def monthly_pay(amount, interest, duration)
   interest = monthly_int(interest.to_f)
   duration = month_term(duration.to_f)
+  amount.to_f * (interest / (1.0 - (1.0 + interest)**(-duration)))
+end
 
-  amount.to_f * (interest / (1 - (1 + interest)**(-duration)))
+def zero_interest(amount, duration)
+  duration = month_term(duration.to_f)
+  amount.to_f / duration
 end
 
 prompt(MESSAGES['welcome'])
@@ -70,7 +75,11 @@ loop do
     end
   end
 
-  result = month_pay(loan, interest, ann_term).round(2)
+  if interest.to_f > 0.0
+    result = monthly_pay(loan, interest, ann_term).round(2)
+  else
+    result = zero_interest(loan, ann_term).round(2)
+  end
 
   prompt(MESSAGES['result'] + result.to_s)
 
