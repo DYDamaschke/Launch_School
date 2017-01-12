@@ -4,7 +4,7 @@ VALID_CHOICES = { 'r' => 'rock',
                   'l' => 'lizard',
                   'sp' => 'spock' }
 
-WINNING_LIST = { 'rock' => %w(scissors lizard),
+WINNING_LIST = {  'rock' => %w(scissors lizard),
                   'paper' => %w(rock spock),
                   'scissors' => %w(paper lizard),
                   'spock' => %w(rock scissors),
@@ -14,8 +14,23 @@ def prompt(message)
   puts "=> #{message}"
 end
 
+def welcome
+  prompt("Welcome to Rock, Paper, Scissors! Choose One:\n
+    (r) rock, (p) paper, (sc) scissors, (sp) spock, (l) lizard.\n\n")
+end
+
 def won?(first, second)
   WINNING_LIST.fetch(first).include?(second)
+end
+
+def display_results(player, computer)
+  if won?(player, computer)
+    prompt("You won!")
+  elsif won?(computer, player)
+    prompt("Computer won!")
+  else
+    prompt("It's a tie!")
+  end
 end
 
 def victory(player, computer)
@@ -28,37 +43,22 @@ def victory(player, computer)
   end
 end
 
-def display_results(player, computer)
-  if won?(player, computer)
-    prompt("You won!\n")
-  elsif won?(computer, player)
-    prompt("Computer won!\n")
-  else
-    prompt("It's a tie!\n")
-  end
-end
+player = ''
 
 loop do
-  player = ''
   player_score = 0
   computer_score = 0
+  welcome
+
   5.times do
     loop do
-      prompt("PLAYER SCORE: #{player_score} / COMPUTER SCORE: #{computer_score}")
-      prompt("Choose one: (r) rock, (p) paper, (sc) scissors, 
-        (sp) spock, (l) lizard.\n\n")
       player = gets.chomp
-
-      if VALID_CHOICES.include?(player)
-        player = VALID_CHOICES.fetch(player)
-        break
-      else
-        prompt("That's not a valid choice.")
-      end
+      break if VALID_CHOICES.include?(player)
+      prompt("That's not a valid choice.")
     end
 
     computer = VALID_CHOICES.values.sample
-
+    player = VALID_CHOICES.fetch(player)
     prompt("You chose: #{player}; Computer chose: #{computer}")
 
     display_results(player, computer)
@@ -67,14 +67,14 @@ loop do
     elsif won?(computer, player)
       computer_score += 1
     end
-
-    system 'clear'
+    prompt("PLAYER: #{player_score} / COMPUTER: #{computer_score}\n")
   end
+
   victory(player_score, computer_score)
   prompt("Do you want to play again?")
   answer = gets.chomp
-
   break unless answer.downcase.start_with?('y')
+  system "clear" unless system "cls"
 end
 
 prompt("Thank you for playing. Good bye!")
