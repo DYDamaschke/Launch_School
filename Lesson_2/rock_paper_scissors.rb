@@ -14,9 +14,13 @@ def prompt(message)
   puts "=> #{message}"
 end
 
-def welcome
-  prompt("Welcome to Rock, Paper, Scissors! Choose One:\n
-    (r) rock, (p) paper, (sc) scissors, (sp) spock, (l) lizard.\n\n")
+def display_welcome
+  prompt("Welcome to Rock, Paper, Scissors!")
+end
+
+def display_choices
+  prompt("\n Choose one:
+  (r) rock, (p) paper, (sc) scissors, (sp) spock, (l) lizard.\n")
 end
 
 def won?(first, second)
@@ -33,7 +37,7 @@ def display_results(player, computer)
   end
 end
 
-def victory(player, computer)
+def display_victory_message(player, computer)
   if player > computer
     prompt("You beat the computer!")
   elsif computer > player
@@ -48,10 +52,11 @@ player = ''
 loop do
   player_score = 0
   computer_score = 0
-  welcome
+  display_welcome
 
   5.times do
     loop do
+      display_choices
       player = gets.chomp
       break if VALID_CHOICES.include?(player)
       prompt("That's not a valid choice.")
@@ -65,10 +70,10 @@ loop do
     player_score += 1 if won?(player, computer)
     computer_score += 1 if won?(computer, player)
 
-    prompt("PLAYER: #{player_score} / COMPUTER: #{computer_score}\n")
+    prompt("PLAYER: #{player_score} / COMPUTER: #{computer_score}")
   end
 
-  victory(player_score, computer_score)
+  display_victory_message(player_score, computer_score)
   prompt("Do you want to play again?")
   answer = gets.chomp
   break unless answer.downcase.start_with?('y')
