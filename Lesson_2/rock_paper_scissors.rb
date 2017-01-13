@@ -62,11 +62,9 @@ loop do
     prompt("You chose: #{player}; Computer chose: #{computer}")
 
     display_results(player, computer)
-    if won?(player, computer)
-      player_score += 1
-    elsif won?(computer, player)
-      computer_score += 1
-    end
+    player_score += 1 if won?(player, computer)
+    computer_score += 1 if won?(computer, player)
+
     prompt("PLAYER: #{player_score} / COMPUTER: #{computer_score}\n")
   end
 
