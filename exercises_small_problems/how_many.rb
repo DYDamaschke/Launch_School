@@ -1,12 +1,9 @@
 def how_many?(arr)
-  occurrences = {}
-  arr.uniq.each do |element|
-    occurrences[element] = arr.count(element)
-  end
+  occurrences = Hash.new(0)
+  arr.each { |element| occurrences[element] += 1 }
+  occurrences.each { |element, count| puts "#{element} => #{count}" }
   
-  occurrences.each do |element, count|
-    puts "#{element} => #{count}"
-  end
 end
 
 how_many?(["spot", "spot", "dog"])
+
