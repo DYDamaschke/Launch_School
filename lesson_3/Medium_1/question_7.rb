@@ -1,0 +1,1 @@
+#The output is 34 because 'answer' was never modified.

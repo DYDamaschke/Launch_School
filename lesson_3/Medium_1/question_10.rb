@@ -1,0 +1,1 @@
+#'No', because foo evaluates to yes, which returns false when compared with 'no'.
