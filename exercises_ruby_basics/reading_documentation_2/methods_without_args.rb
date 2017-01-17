@@ -1,0 +1,3 @@
+string = "xyz"
+
+string.upcase
