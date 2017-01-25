@@ -8,7 +8,7 @@ user = gets.chomp
 puts ">> Please enter your password: "
 pass = gets.chomp
 
-break if (pass == PASSWORD) && (user == USERNAME)
+break if user == USERNAME && pass == PASSWORD
 puts ">> Invalid Username or Password."
 end
 
