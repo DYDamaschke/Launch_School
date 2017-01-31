@@ -1,18 +1,18 @@
 arr = [['stars', 'river'], 'letter', ['leaves', ['horses', 'table']]]
 
-b = arr.map do |word|
-  if word.is_a? Array
-    word.select do |word2|
-      if word2.is_a? Array
-        word.select do |word3|
-          word
-        end
+b = arr.each_with_object([]) do |inner_arr1, new_arr|
+  if inner_arr1.size > 2
+    new_arr << inner_arr1
+  else
+    inner_arr1.each do |inner_arr2|
+      if inner_arr2.size > 2
+        new_arr << inner_arr2
       else
-        word
+        inner_arr2.each do |inner_arr3|
+          new_arr << inner_arr3
+        end
       end
     end
-  else
-    word
   end
 end
 
