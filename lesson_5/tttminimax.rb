@@ -2,7 +2,7 @@ require 'pry'
 INIT_MARKER = ' '
 PLAYER_MARKER = 'X'
 COMPUTER_MARKER = 'O'
-FIRST_PLAYER = 'player'
+FIRST_PLAYER = 'choose'
 
 WINNING_COMBO = [[1, 2, 3], [4, 5, 6], [7, 8, 9]] +
                 [[1, 4, 7], [2, 5, 8], [3, 6, 9]] +
@@ -13,10 +13,11 @@ def prompt(msg)
 end
 
 # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-def show_brd(moves, player, comp)
-  system 'clear'
+def show_brd(moves, player, comp, message)
+  system('cls') || system('clear')
   puts "SCORE:\n" \
        "Player(X): #{player} | Computer(O): #{comp}"
+  prompt message
   puts ""
   puts "     |     |"
   puts "  #{moves[1]}  |  #{moves[2]}  |  #{moves[3]}"
@@ -61,7 +62,7 @@ def player_place_marker!(brd)
     player_marker = gets.to_i
     break if empty_squares(brd).include?(player_marker)
 
-    puts "Sorry, that's not a valid choice."
+    prompt("Sorry, that's not a valid choice.")
   end
   brd[player_marker] = PLAYER_MARKER
 end
@@ -73,6 +74,7 @@ end
 
 def computer_find_move(brd, marker)
   comp_marker = nil
+
   WINNING_COMBO.each do |line|
     comp_marker = find_at_risk_square(line, brd, marker)
     break if comp_marker
@@ -80,10 +82,52 @@ def computer_find_move(brd, marker)
   comp_marker
 end
 
-def computer_place_marker!(brd)
-  comp_marker = computer_find_move(brd, COMPUTER_MARKER)
+def open_squares(board)
+  board.select { |_square, marker| marker == ' ' }
+end
 
-  comp_marker = computer_find_move(brd, PLAYER_MARKER) if !comp_marker
+def minimax_move_score(board, score=0)
+  player_win = display_winner(board) == "Player won!"
+  computer_win = display_winner(board) == "Computer won!"
+  score -= 10 + board.values.count(' ') if player_win
+  score += 10 + board.values.count(' ') if computer_win
+  score
+end
+
+def minimax(square, board, player=[COMPUTER_MARKER, PLAYER_MARKER])
+  board[square] = player[0]
+  open_moves = open_squares(board)
+  score = minimax_move_score(board)
+
+  return score if (score > 0 || score < 0) || open_moves.empty?
+
+  open_moves.each do |sub_square, _marker|
+    player.rotate!
+    score = minimax(sub_square, board, player)
+  end
+
+  score
+end
+
+def minimax_call(board)
+  board_state = {}
+  board_state = board_state.merge(board)
+  free_squares = open_squares(board_state)
+
+  free_squares.each_with_object({}) do |(square, _marker), score_list|
+    score_list[square] = minimax(square, board_state)
+  end
+end
+
+def best_move(board)
+  moves = computer_find_move(board, PLAYER_MARKER)
+  moves = minimax_call(board) if !moves
+
+  moves.is_a?(Hash) ? moves.key(moves.values.max) : moves
+end
+
+def computer_place_marker!(brd)
+  comp_marker = best_move(brd) if !comp_marker
 
   comp_marker = 5 if !comp_marker && brd[5] == ' '
 
@@ -102,7 +146,8 @@ end
 
 def player_order!(player_list)
   if FIRST_PLAYER == 'choose'
-    puts "Enter a number for the first player: Player = 1 | computer = 2"
+    prompt "Enter a number to choose the first player: " \
+      "Player = 1 | computer = 2"
     player = gets.to_i
     if player == 2
       player_list.rotate!(1)
@@ -128,28 +173,38 @@ def player_won?(brd)
   !!display_winner(brd)
 end
 
+player_order_list = [1, 2]
+player_order!(player_order_list)
+
 loop do
   computer_score = 0
   player_score = 0
+  welcome = "Welcome to Tic-Tac-Toe! First player to win 5 rounds wins!"
 
   loop do
     board = initialize_board
-    player_order_list = [1, 2]
-    player_order!(player_order_list)
 
     loop do
-      show_brd(board, player_score, computer_score)
+      show_brd(board, player_score, computer_score, welcome)
       make_a_move(player_order_list[0], board)
       player_order_list.rotate!
       break if player_won?(board) || board_full?(board)
     end
 
-    show_brd(board, player_score, computer_score)
     if display_winner(board) == "Player won!"
       player_score += 1
+      round_winner = display_winner(board)
     elsif display_winner(board) == "Computer won!"
       computer_score += 1
+      round_winner = display_winner(board)
+    else
+      round_winner = "It was a tie!"
     end
+
+    show_brd(board, player_score, computer_score, round_winner)
+    prompt "Press enter to continue to the next round, or type exit to end."
+    continue = gets.chomp.downcase
+    break if continue == 'end'
 
     break puts display_winner(board) if player_score == 5 || computer_score == 5
   end
