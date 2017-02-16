@@ -36,12 +36,12 @@ end
 
 def initialize_board
   new_board = Hash.new
-  (1..9).each { |num| new_board[num] = INIT_MARKER }
+  (1..9).each { |square| new_board[square] = INIT_MARKER }
   new_board
 end
 
 def empty_squares(brd)
-  brd.keys.select { |num| brd[num] == INIT_MARKER }
+  brd.select { |_square, marker| marker == INIT_MARKER }
 end
 
 def joiner(list, delimiter=', ', word='or')
@@ -58,7 +58,7 @@ end
 def player_place_marker!(brd)
   player_marker = ''
   loop do
-    prompt("Please choose a square: #{joiner(empty_squares(brd))}.")
+    prompt("Please choose a square: #{joiner(empty_squares(brd).keys)}.")
     player_marker = gets.to_i
     break if empty_squares(brd).include?(player_marker)
 
@@ -82,47 +82,73 @@ def computer_find_move(brd, marker)
   comp_marker
 end
 
-def open_squares(board)
-  board.select { |_square, marker| marker == ' ' }
-end
-
-def minimax_move_score(board, score=0)
+def minimax_move_score(board, origin, score=0)
   player_win = display_winner(board) == "Player won!"
   computer_win = display_winner(board) == "Computer won!"
+  origin_open_moves = origin.values.count(' ')
   score -= 10 + board.values.count(' ') if player_win
+    if player_win && (board.values.count(' ') == origin_open_moves - 1)
+      score += 10
+    end
   score += 10 + board.values.count(' ') if computer_win
+    if computer_win && (board.values.count(' ') == origin_open_moves - 1)
+      score += 15
+    end
+    binding.pry
   score
 end
 
-def minimax(square, board, player=[COMPUTER_MARKER, PLAYER_MARKER])
+def return_minimax_score(scores, open_moves)
+  binding.pry
+  if (scores[0] > 0) || (scores[1] > 0)
+    return scores
+  elsif (scores[0] < 0) || (scores[1] < 0)
+    return scores
+  elsif open_moves.empty?
+    return scores
+  else
+    return nil
+  end
+  nil
+end
+
+def minimax(square, board, origin, player=[COMPUTER_MARKER, PLAYER_MARKER])
+  scores = []
   board[square] = player[0]
-  open_moves = open_squares(board)
-  score = minimax_move_score(board)
+  open_moves = empty_squares(board)
+  comp_score = minimax_move_score(board, origin)
 
-  return score if (score > 0 || score < 0) || open_moves.empty?
+  board[square] = player[1]
+  player_score = minimax_move_score(board, origin)
+  scores[0, 1] = comp_score, player_score
+binding.pry
+  if return_minimax_score(scores, open_moves)
+    return scores
+  else
 
-  open_moves.each do |sub_square, _marker|
-    player.rotate!
-    score = minimax(sub_square, board, player)
+    open_moves.each do |sub_square, _marker|
+      scores = minimax(sub_square, board, origin)
+    end
   end
 
-  score
+scores
 end
 
 def minimax_call(board)
   board_state = {}
   board_state = board_state.merge(board)
-  free_squares = open_squares(board_state)
+  free_squares = empty_squares(board_state)
 
   free_squares.each_with_object({}) do |(square, _marker), score_list|
-    score_list[square] = minimax(square, board_state)
+    score_list[square] = minimax(square, board_state, board)
+    binding.pry
   end
 end
 
 def best_move(board)
-  moves = computer_find_move(board, PLAYER_MARKER)
+  #moves = computer_find_move(board, PLAYER_MARKER)
   moves = minimax_call(board) if !moves
-
+  binding.pry
   moves.is_a?(Hash) ? moves.key(moves.values.max) : moves
 end
 
@@ -202,11 +228,11 @@ loop do
     end
 
     show_brd(board, player_score, computer_score, round_winner)
+    break puts display_winner(board) if player_score == 5 || computer_score == 5
+
     prompt "Press enter to continue to the next round, or type exit to end."
     continue = gets.chomp.downcase
-    break if continue == 'end'
-
-    break puts display_winner(board) if player_score == 5 || computer_score == 5
+    break if continue == 'exit'
   end
 
   prompt("Would you like to play again? (Y/N)")
