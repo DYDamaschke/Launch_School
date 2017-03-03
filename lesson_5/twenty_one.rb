@@ -12,13 +12,9 @@ def card_totals(cards)
 
   total = 0
   values.each do |value|
-    if value == 'Ace'
-      total += 11
-    elsif value.to_i == 0
-      total += 10
-    else
-      total += value
-    end
+    total += 11 if value == 'Ace'
+    total += 10 if value.to_i == 0
+    total += value if value.to_i > 0
   end
 
   values.select { |value| value == 'Ace' }.count.times do
@@ -78,7 +74,8 @@ def play_again?
 
   loop do
     action = gets.chomp
-    break if action.downcase == 'n' || action == 'y'
+    binding.pry
+    break if action.casecmp('n') > 0 || action.casecmp('y') > 0
     prompt "Please enter 'y' for yes or 'n' for no."
   end
 
@@ -88,7 +85,7 @@ end
 action = nil
 
 loop do
-  system "clear" || system "cls"
+  (system "clear") || (system "cls")
 
   puts "==========================="
   puts "Welcome to Twenty One!"
