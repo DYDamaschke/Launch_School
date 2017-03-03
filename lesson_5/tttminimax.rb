@@ -88,18 +88,16 @@ def minimax_move_score(board, origin, score=0)
   origin_open_moves = origin.values.count(' ')
   score -= 10 + board.values.count(' ') if player_win
     if player_win && (board.values.count(' ') == origin_open_moves - 1)
-      score += 10
+      score = score.abs + 10
     end
   score += 10 + board.values.count(' ') if computer_win
     if computer_win && (board.values.count(' ') == origin_open_moves - 1)
-      score += 15
+      score += 20
     end
-    binding.pry
   score
 end
 
 def return_minimax_score(scores, open_moves)
-  binding.pry
   if (scores[0] > 0) || (scores[1] > 0)
     return scores
   elsif (scores[0] < 0) || (scores[1] < 0)
@@ -113,43 +111,43 @@ def return_minimax_score(scores, open_moves)
 end
 
 def minimax(square, board, origin, player=[COMPUTER_MARKER, PLAYER_MARKER])
-  scores = []
-  board[square] = player[0]
-  open_moves = empty_squares(board)
-  comp_score = minimax_move_score(board, origin)
+  board_state = {}
+  board_state = board_state.merge(board)
 
-  board[square] = player[1]
-  player_score = minimax_move_score(board, origin)
+  scores = []
+  board_state[square] = player[0]
+  open_moves = empty_squares(board_state)
+  comp_score = minimax_move_score(board_state, origin)
+
+  board_state[square] = player[1]
+  player_score = minimax_move_score(board_state, origin)
   scores[0, 1] = comp_score, player_score
-binding.pry
+
   if return_minimax_score(scores, open_moves)
     return scores
-  else
-
-    open_moves.each do |sub_square, _marker|
-      scores = minimax(sub_square, board, origin)
-    end
   end
+  board_state[square] = player[scores.index(scores.max)]
+    open_moves.each do |sub_square, _marker|
+      scores = minimax(sub_square, board_state, origin)
+      break if return_minimax_score(scores, open_moves)
+    end
 
 scores
 end
 
 def minimax_call(board)
-  board_state = {}
-  board_state = board_state.merge(board)
-  free_squares = empty_squares(board_state)
-
+  free_squares = empty_squares(board)
   free_squares.each_with_object({}) do |(square, _marker), score_list|
-    score_list[square] = minimax(square, board_state, board)
-    binding.pry
+    score_list[square] = minimax(square, board, board)
   end
 end
 
 def best_move(board)
   #moves = computer_find_move(board, PLAYER_MARKER)
   moves = minimax_call(board) if !moves
+  moves_list = moves.sort_by {|key, value| value.sort }
   binding.pry
-  moves.is_a?(Hash) ? moves.key(moves.values.max) : moves
+  moves_list.last[0]
 end
 
 def computer_place_marker!(brd)
