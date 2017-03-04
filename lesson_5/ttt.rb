@@ -1,4 +1,4 @@
-INIT_MARKER = ' '
+INITIAL_MARKER = ' '
 PLAYER_MARKER = 'X'
 COMPUTER_MARKER = 'O'
 FIRST_PLAYER = 'player'
@@ -12,10 +12,10 @@ def prompt(msg)
 end
 
 # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-def show_brd(moves, player, comp)
+def show_brd(moves, player, computer)
   system 'clear'
   puts "SCORE:\n" \
-       "Player(X): #{player} | Computer(O): #{comp}"
+       "Player(X): #{player} | Computer(O): #{computer}"
   puts ""
   puts "     |     |"
   puts "  #{moves[1]}  |  #{moves[2]}  |  #{moves[3]}"
@@ -34,12 +34,12 @@ end
 
 def initialize_board
   new_board = Hash.new
-  (1..9).each { |num| new_board[num] = INIT_MARKER }
+  (1..9).each { |num| new_board[num] = INITIAL_MARKER }
   new_board
 end
 
-def empty_squares(brd)
-  brd.keys.select { |num| brd[num] == INIT_MARKER }
+def empty_squares(board)
+  board.keys.select { |num| board[num] == INITIAL_MARKER }
 end
 
 def joiner(list, delimiter=', ', word='or')
@@ -53,49 +53,52 @@ def joiner(list, delimiter=', ', word='or')
   end
 end
 
-def player_place_marker!(brd)
-  player_marker = ''
+def player_place_marker!(board)
+  player_choice = ''
   loop do
-    prompt("Please choose a square: #{joiner(empty_squares(brd))}.")
-    player_marker = gets.to_i
-    break if empty_squares(brd).include?(player_marker)
+    prompt("Please choose a square: #{joiner(empty_squares(board))}.")
+    player_choice = gets.to_i
+    break if empty_squares(board).include?(player_choice)
 
     puts "Sorry, that's not a valid choice."
   end
-  brd[player_marker] = PLAYER_MARKER
+  board[player_choice] = PLAYER_MARKER
 end
 
-def find_at_risk_square(line, brd, marker)
-  square = brd.select { |k, v| line.include?(k) && v == INIT_MARKER }.keys.first
-  return square unless brd.values_at(*line).count(marker) != 2
-end
-
-def computer_find_move(brd, marker)
-  comp_marker = nil
-  WINNING_COMBO.each do |line|
-    comp_marker = find_at_risk_square(line, brd, marker)
-    break if comp_marker
+def find_at_risk_square(line, board, marker)
+  square = board.select do |k, v|
+    line.include?(k) && v == INITIAL_MARKER
   end
-  comp_marker
+  square = square.keys.first
+  return square if board.values_at(*line).count(marker) == 2
 end
 
-def computer_place_marker!(brd)
-  comp_marker = computer_find_move(brd, COMPUTER_MARKER)
-
-  comp_marker = computer_find_move(brd, PLAYER_MARKER) if !comp_marker
-
-  comp_marker = 5 if !comp_marker && brd[5] == ' '
-
-  comp_marker = empty_squares(brd).sample if !comp_marker
-
-  brd[comp_marker] = COMPUTER_MARKER
+def computer_find_move(board, marker)
+  computer_choice = nil
+  WINNING_COMBO.each do |line|
+    computer_choice = find_at_risk_square(line, board, marker)
+    break if computer_choice
+  end
+  computer_choice
 end
 
-def make_a_move(player, brd)
+def computer_place_marker!(board)
+  computer_choice = computer_find_move(board, COMPUTER_MARKER)
+
+  computer_choice ||= computer_find_move(board, PLAYER_MARKER)
+
+  computer_choice = 5 if !computer_choice && board[5] == ' '
+
+  computer_choice = empty_squares(board).sample unless computer_choice
+
+  board[computer_choice] = COMPUTER_MARKER
+end
+
+def make_a_move(player, board)
   if player == 1
-    player_place_marker!(brd)
+    player_place_marker!(board)
   else
-    computer_place_marker!(brd)
+    computer_place_marker!(board)
   end
 end
 
@@ -111,20 +114,26 @@ def player_order!(player_list)
   end
 end
 
-def display_winner(brd)
+def display_winner(board)
+  puts "Player won!" if find_winner(board) == :player
+  puts "Computer won!" if find_winner(board) == :computer
+  puts "It was a tie!" unless find_winner(board)
+end
+
+def find_winner(board)
   WINNING_COMBO.each do |combo|
-    return "Player won!" unless brd.values_at(*combo).count('X') != 3
-    return "Computer won!" unless brd.values_at(*combo).count('O') != 3
+    return :player if board.values_at(*combo).count('X') == 3
+    return :computer if board.values_at(*combo).count('O') == 3
   end
   nil
 end
 
-def board_full?(brd)
-  empty_squares(brd).empty?
+def board_full?(board)
+  empty_squares(board).empty?
 end
 
-def player_won?(brd)
-  !!display_winner(brd)
+def player_won?(board)
+  !!find_winner(board)
 end
 
 loop do
@@ -144,9 +153,9 @@ loop do
     end
 
     show_brd(board, player_score, computer_score)
-    if display_winner(board) == "Player won!"
+    if find_winner(board) == :player
       player_score += 1
-    elsif display_winner(board) == "Computer won!"
+    elsif find_winner(board) == :computer
       computer_score += 1
     end
 

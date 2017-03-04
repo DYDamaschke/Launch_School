@@ -7,6 +7,12 @@ def prompt(message)
   puts "=> #{message}"
 end
 
+def master_prompt(message)
+  puts "==========================="
+  puts message
+  puts "==========================="
+end
+
 def card_totals(cards)
   values = cards.map { |card| card[1] }
 
@@ -74,8 +80,7 @@ def play_again?
 
   loop do
     action = gets.chomp
-    binding.pry
-    break if action.casecmp('n') > 0 || action.casecmp('y') > 0
+    break if action.casecmp('n') == 0 || action.casecmp('y') == 0
     prompt "Please enter 'y' for yes or 'n' for no."
   end
 
@@ -87,9 +92,7 @@ action = nil
 loop do
   (system "clear") || (system "cls")
 
-  puts "==========================="
-  puts "Welcome to Twenty One!"
-  puts "==========================="
+  master_prompt "Welcome to Twenty One!"
 
   deck = initialize_deck
   player_hand = Array.new
@@ -107,17 +110,14 @@ loop do
   puts "?"
 
   loop do
-    prompt "Your total is #{card_totals(player_hand)}," +
-    " press 1 to hit or 2 to stay:"
+    prompt "Your total is #{card_totals(player_hand)}," \
+           " press 1 to hit or 2 to stay:"
     action = gets.chomp.to_i
 
     loop do
-      if action == 1 || action == 2
-        break
-      else
-        prompt "Please enter 1 to hit or 2 to stay."
-        action = gets.chomp.to_i
-      end
+      break if action == 1 || action == 2
+      prompt "Please enter 1 to hit or 2 to stay."
+      action = gets.chomp.to_i
     end
 
     if action == 1
@@ -130,46 +130,38 @@ loop do
     break if action == 2 || busted?(player_hand)
   end
 
+  player_total = card_totals(player_hand)
   if busted?(player_hand)
-    puts "==========================="
-    prompt "Your total is #{card_totals(player_hand)}"
-    puts "==========================="
+    master_prompt "Your total is #{player_total}"
     display_winner(player_hand, dealer_hand)
     play_again? ? next : break
   else
-    prompt "You stayed, your cards are: "
-    puts display_cards(player_hand)
-    puts "==========================="
-    prompt "Your total is #{card_totals(player_hand)}"
-    puts "==========================="
+    master_prompt "You stayed, your total is #{player_total}"
   end
 
   prompt "Dealer turn..."
 
+  prompt "Dealer's cards are: "
+  puts display_cards(dealer_hand)
+
   loop do
     break if card_totals(dealer_hand) >= 17
-
     dealer_hand << deck.pop
     prompt "Dealer drew "
     puts display_cards(dealer_hand)
   end
 
+  dealer_total = card_totals(dealer_hand)
   if busted?(dealer_hand)
-    puts "==========================="
-    prompt "Dealer total is #{card_totals(dealer_hand)}"
-    puts "==========================="
+    master_prompt "Dealer total is #{dealer_total}"
     display_winner(player_hand, dealer_hand)
     play_again? ? next : break
   else
-    puts "==========================="
-    prompt "Dealer stays at #{card_totals(dealer_hand)}"
-    puts "==========================="
+    master_prompt "Dealer stays at #{dealer_total}"
   end
 
-  puts "==========================="
-  prompt "Dealer total is #{card_totals(dealer_hand)}"
-  prompt "Player total is #{card_totals(player_hand)}"
-  puts "==========================="
+  master_prompt "Dealer total is #{dealer_total}" \
+                "\nPlayer total is #{player_total}"
 
   display_winner(player_hand, dealer_hand)
 
