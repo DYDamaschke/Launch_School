@@ -1,7 +1,8 @@
+require 'pry'
 VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'Jack', 'Queen', 'King', 'Ace']
 SUITS = ['Hearts', 'Clubs', 'Spades', 'Diamonds']
 MAXIMUM_SCORE = 21
-MINIMUM_DEALER_SCORE = 17
+MINIMUM_DEALER_SCORE = MAXIMUM_SCORE - 4
 
 def prompt(message)
   puts "=> #{message}"
@@ -40,10 +41,12 @@ def initialize_deck
   SUITS.product(VALUES).shuffle
 end
 
-def display_cards(current_hand, show='all')
+def display_cards(player, current_hand, show='all')
+  prompt "#{player} hand is: "
   current_hand.each do |card|
-    puts "#{card[1]} of #{card[0]}"
-    break if show == 1
+    line = "#{card[1]} of #{card[0]}"
+    puts line.rjust(15 + line.length)
+    break puts "?".rjust(16) if show == 1
   end
   nil
 end
@@ -106,6 +109,28 @@ def continue?
   continue == ''
 end
 
+def get_player_move(player_hand)
+  secondary_prompt "Your total is #{card_totals(player_hand)}." \
+                   "\nPress 1 to hit or 2 to stay:"
+  action = gets.chomp.to_i
+
+  loop do
+    break if action == 1 || action == 2
+    secondary_prompt "Please enter 1 to hit or 2 to stay."
+    action = gets.chomp.to_i
+  end
+
+  action
+end
+
+def deal_cards!(current_hand, deck, max_cards=1)
+  max_cards.times { current_hand << deck.pop }
+end
+
+def declare_final_winner(player, dealer)
+  player > dealer ? master_prompt("Player won!") : master_prompt("Dealer won!")
+end
+
 action = nil
 player_score = 0
 dealer_score = 0
@@ -114,43 +139,28 @@ loop do
   until player_score == 5 || dealer_score == 5
     (system "clear") || (system "cls")
 
-    master_prompt "Welcome to Twenty One!"
-    prompt "Player Score: #{player_score} | Dealer Score: #{dealer_score}"
+    master_prompt "Welcome to #{MAXIMUM_SCORE}!\n" \
+                  "First Player to win 5 rounds wins!"
+    prompt "Player Score: #{player_score} | Dealer Score: #{dealer_score}\n"
 
     deck = initialize_deck
     player_hand = Array.new
     dealer_hand = Array.new
 
-    2.times do
-      player_hand << deck.pop
-      dealer_hand << deck.pop
-    end
+    deal_cards!(player_hand, deck, 2)
+    display_cards("Player", player_hand)
 
-    prompt "Your cards are: "
-    puts "#{display_cards(player_hand)}\n"
-
-    prompt "The dealer drew: "
-    puts "#{dealer_hand[0][1]} of #{dealer_hand[0][0]}\n'?'"
+    deal_cards!(dealer_hand, deck, 2)
+    display_cards("Dealer", dealer_hand, 1)
 
     loop do
-      secondary_prompt "Your total is #{card_totals(player_hand)}." \
-             "\nPress 1 to hit or 2 to stay:"
-      action = gets.chomp.to_i
-
-      loop do
-        break if action == 1 || action == 2
-        secondary_prompt "Please enter 1 to hit or 2 to stay."
-        action = gets.chomp.to_i
-      end
-
-      if action == 1
-        player_hand << deck.pop
+      player_move = get_player_move(player_hand)
+      if player_move == 1
         prompt "You chose to hit!"
-        prompt "Your cards are: "
-        puts display_cards(player_hand)
+        deal_cards!(player_hand, deck)
       end
 
-      break if action == 2 || busted?(player_hand)
+      break if player_move == 2 || busted?(player_hand)
     end
 
     player_total = card_totals(player_hand)
@@ -158,24 +168,20 @@ loop do
     if busted?(player_hand)
       master_prompt "Your total is #{player_total}"
       display_winner(player_hand, dealer_hand)
-      dealer_score += 1
-      next if continue?
-      action = 'quit'
-      break
+      next dealer_score += 1 if continue?
+      break action = 'quit'
     else
       prompt "You stayed, your total is #{player_total}"
     end
 
     prompt "Dealer turn..."
 
-    prompt "Dealer's cards are: "
-    puts display_cards(dealer_hand)
+    puts display_cards("Dealer", dealer_hand)
 
     loop do
       break if card_totals(dealer_hand) >= MINIMUM_DEALER_SCORE
-      dealer_hand << deck.pop
-      prompt "Dealer drew "
-      puts display_cards(dealer_hand)
+      deal_cards!(dealer_hand, deck)
+      display_cards("Dealer", dealer_hand)
     end
 
     dealer_total = card_totals(dealer_hand)
@@ -183,10 +189,8 @@ loop do
     if busted?(dealer_hand)
       master_prompt "Dealer total is #{dealer_total}"
       display_winner(player_hand, dealer_hand)
-      player_score += 1
-      next if continue?
-      action = 'quit'
-      break
+      next player_score += 1 if continue?
+      break action = 'quit'
     else
       prompt "Dealer stays at #{dealer_total}"
     end
@@ -206,6 +210,7 @@ loop do
   end
 
   break if action == 'quit'
+  declare_final_winner(player_score, dealer_score)
   break unless play_again?
 end
 
