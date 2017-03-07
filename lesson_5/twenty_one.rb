@@ -1,4 +1,3 @@
-require 'pry'
 VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'Jack', 'Queen', 'King', 'Ace']
 SUITS = ['Hearts', 'Clubs', 'Spades', 'Diamonds']
 MAXIMUM_SCORE = 21
