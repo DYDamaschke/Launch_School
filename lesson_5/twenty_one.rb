@@ -1,7 +1,9 @@
-VALUES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'Jack', 'Queen', 'King', 'Ace']
+require 'pry'
+VALUES = [2, 3, 4, 5, 6, 7, 8, 9, 'Jack', 'Queen', 'King', 'Ace']
 SUITS = ['Hearts', 'Clubs', 'Spades', 'Diamonds']
 MAXIMUM_SCORE = 21
 MINIMUM_DEALER_SCORE = MAXIMUM_SCORE - 4
+WINNING_SCORE = 5
 
 def prompt(message)
   puts "=> #{message}"
@@ -25,11 +27,11 @@ def card_totals(cards)
   total = 0
   values.each do |value|
     total += 11 if value == 'Ace'
-    total += 10 if value.to_i == 0
+    total += 10 unless value == 'Ace' || value.to_i > 0
     total += value if value.to_i > 0
   end
 
-  values.select { |value| value == 'Ace' }.count.times do
+  values.count { |value| value == 'Ace' }.times do
     total -= 10 if total > MAXIMUM_SCORE
   end
 
@@ -40,12 +42,12 @@ def initialize_deck
   SUITS.product(VALUES).shuffle
 end
 
-def display_cards(player, current_hand, show='all')
+def display_cards(player, current_hand, hide_one=false)
   prompt "#{player} hand is: "
   current_hand.each do |card|
     line = "#{card[1]} of #{card[0]}"
     puts line.rjust(15 + line.length)
-    break puts "?".rjust(16) if show == 1
+    break puts "?".rjust(16) if hide_one
   end
   nil
 end
@@ -97,12 +99,11 @@ end
 
 def continue?
   prompt "Press <enter> to continue or 'Q' to quit."
-  continue = false
-
+  continue = gets.chomp
   loop do
-    continue = gets.chomp
     break if continue.casecmp('q') == 0 || continue == ''
     prompt "Please press <enter> or 'Q'."
+    continue = gets.chomp
   end
 
   continue == ''
@@ -135,7 +136,10 @@ player_score = 0
 dealer_score = 0
 
 loop do
-  until player_score == 5 || dealer_score == 5
+  player_score = 0
+  dealer_score = 0
+
+  until player_score == WINNING_SCORE || dealer_score == WINNING_SCORE
     (system "clear") || (system "cls")
 
     master_prompt "Welcome to #{MAXIMUM_SCORE}!\n" \
@@ -150,13 +154,14 @@ loop do
     display_cards("Player", player_hand)
 
     deal_cards!(dealer_hand, deck, 2)
-    display_cards("Dealer", dealer_hand, 1)
+    display_cards("Dealer", dealer_hand, true)
 
     loop do
       player_move = get_player_move(player_hand)
       if player_move == 1
         prompt "You chose to hit!"
         deal_cards!(player_hand, deck)
+        display_cards("Player", player_hand)
       end
 
       break if player_move == 2 || busted?(player_hand)
@@ -168,19 +173,22 @@ loop do
       master_prompt "Your total is #{player_total}"
       display_winner(player_hand, dealer_hand)
       next dealer_score += 1 if continue?
-      break action = 'quit'
+      action = 'quit'
+      break
     else
       prompt "You stayed, your total is #{player_total}"
     end
 
     prompt "Dealer turn..."
 
-    puts display_cards("Dealer", dealer_hand)
+    display_cards("Dealer", dealer_hand)
+    puts ""
 
     loop do
       break if card_totals(dealer_hand) >= MINIMUM_DEALER_SCORE
       deal_cards!(dealer_hand, deck)
       display_cards("Dealer", dealer_hand)
+      puts ""
     end
 
     dealer_total = card_totals(dealer_hand)
@@ -189,7 +197,8 @@ loop do
       master_prompt "Dealer total is #{dealer_total}"
       display_winner(player_hand, dealer_hand)
       next player_score += 1 if continue?
-      break action = 'quit'
+      action = 'quit'
+      break
     else
       prompt "Dealer stays at #{dealer_total}"
     end
